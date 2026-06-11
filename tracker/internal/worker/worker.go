@@ -46,9 +46,9 @@ func (w *Worker) Run(ctx context.Context) {
 }
 
 func (w *Worker) collect(ctx context.Context, pending *batch) {
-	w.readClicks(ctx, pending)
-	w.readImpressions(ctx, pending)
-	w.readConversions(ctx, pending)
+	w.readClicks(ctx, pending, 100*time.Millisecond)
+	w.readImpressions(ctx, pending, 100*time.Millisecond)
+	w.readConversions(ctx, pending, 100*time.Millisecond)
 }
 
 func (w *Worker) FlushNow(ctx context.Context) (int, error) {
@@ -67,10 +67,6 @@ func (w *Worker) drainAll(ctx context.Context, pending *batch) {
 	w.readConversions(ctx, pending, 0)
 }
 
-func (w *Worker) readClicks(ctx context.Context, pending *batch) {
-	w.readClicks(ctx, pending, 100*time.Millisecond)
-}
-
 func (w *Worker) readClicks(ctx context.Context, pending *batch, block time.Duration) {
 	w.readStream(ctx, models.StreamClicks, block, func(raw []byte) error {
 		var ev models.ClickEvent
@@ -82,10 +78,6 @@ func (w *Worker) readClicks(ctx context.Context, pending *batch, block time.Dura
 	})
 }
 
-func (w *Worker) readImpressions(ctx context.Context, pending *batch) {
-	w.readImpressions(ctx, pending, 100*time.Millisecond)
-}
-
 func (w *Worker) readImpressions(ctx context.Context, pending *batch, block time.Duration) {
 	w.readStream(ctx, models.StreamImpressions, block, func(raw []byte) error {
 		var ev models.ImpressionEvent
@@ -95,10 +87,6 @@ func (w *Worker) readImpressions(ctx context.Context, pending *batch, block time
 		pending.addImpression(ev)
 		return nil
 	})
-}
-
-func (w *Worker) readConversions(ctx context.Context, pending *batch) {
-	w.readConversions(ctx, pending, 100*time.Millisecond)
 }
 
 func (w *Worker) readConversions(ctx context.Context, pending *batch, block time.Duration) {
