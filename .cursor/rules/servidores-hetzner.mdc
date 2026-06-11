@@ -1,0 +1,21 @@
+---
+description: Servidores Hetzner del proyecto TheValueFlow
+alwaysApply: true
+---
+
+# Servidores Hetzner — TheValueFlow
+
+## AffTheValueFlow — Plataforma (Laravel)
+- IP pública: 167.233.46.114 | IP privada: 10.5.0.3
+- CPX42 — Laravel 11 + Inertia + Vue 3, MySQL 8, Redis, Horizon, Nginx
+- Path deploy: /var/www/tvf
+
+## AffGoServer — Tracker (Go)
+- IP pública: 167.233.41.29 | IP privada: 10.5.0.2
+- CCX23 — Go tracker, Redis buffer, Caddy TLS on-demand
+- Path deploy: /opt/tvf-tracker
+- MySQL remoto: 10.5.0.3
+
+## Acceso
+- SSH vía Tailscale (tras auth). Usuario deploy.
+- Red privada 10.5.0.0/16 — tráfico Go→MySQL por IP privada.

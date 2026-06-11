@@ -1,0 +1,16 @@
+[Unit]
+Description=TheValueFlow Tracking Server
+After=network.target redis-server.service
+
+[Service]
+Type=simple
+User=deploy
+WorkingDirectory=/opt/tvf-tracker
+EnvironmentFile=/opt/tvf-tracker/.env
+ExecStart=/opt/tvf-tracker/tvf-tracker
+Restart=always
+RestartSec=5
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target

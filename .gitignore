@@ -1,0 +1,33 @@
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Secrets
+.env
+.env.*
+!.env.example
+!.env.production.example
+**/tvf-db-credentials
+
+# Laravel app
+app/vendor/
+app/node_modules/
+app/public/hot
+app/public/storage
+app/storage/*.key
+app/storage/pail
+app/.phpunit.cache
+app/.phpunit.result.cache
+app/npm-debug.log
+app/yarn-error.log
+app/auth.json
+
+# Go tracker
+tracker/tvf-tracker
+tracker/.env
+
+# Build artifacts (install/build on deploy)
+# app/public/build is excluded by Laravel convention — uncomment to commit built assets:
+# !app/public/build/
