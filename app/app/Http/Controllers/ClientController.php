@@ -22,7 +22,7 @@ class ClientController extends Controller
             'contact_name' => 'nullable|string|max:255',
             'email' => 'nullable|email',
             'phone' => 'nullable|string|max:50',
-            'payment_terms' => 'nullable|string',
+            'payment_terms' => 'nullable|in:net_10,net_20,net_30',
             'status' => 'required|in:active,paused,pending',
             'notes' => 'nullable|string',
         ]);
@@ -39,7 +39,7 @@ class ClientController extends Controller
             'contact_name' => 'nullable|string|max:255',
             'email' => 'nullable|email',
             'phone' => 'nullable|string|max:50',
-            'payment_terms' => 'nullable|string',
+            'payment_terms' => 'nullable|in:net_10,net_20,net_30',
             'status' => 'required|in:active,paused,pending',
             'notes' => 'nullable|string',
         ]);

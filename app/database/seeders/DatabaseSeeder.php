@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Client;
 use App\Models\Offer;
 use App\Models\OfferLandingPage;
+use App\Models\OfferPaymentType;
 use App\Models\Partner;
 use App\Models\TrackingDomain;
 use App\Models\User;
@@ -57,6 +58,11 @@ class DatabaseSeeder extends Seeder
                 'status' => 'active',
                 'tracking_domain_id' => $domain->id,
             ]
+        );
+
+        OfferPaymentType::firstOrCreate(
+            ['offer_id' => $offer->id, 'type' => 'CPL'],
+            ['revenue' => 15, 'payout' => 10]
         );
 
         OfferLandingPage::firstOrCreate(

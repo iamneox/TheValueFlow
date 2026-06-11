@@ -1,4 +1,5 @@
 <script setup>
+import { computed } from 'vue';
 import { useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 
@@ -10,6 +11,7 @@ const props = defineProps({
     offers: { type: Array, default: () => [] },
     partners: { type: Array, default: () => [] },
     clients: { type: Array, default: () => [] },
+    trackerSync: { type: Object, default: () => ({}) },
 });
 
 const form = useForm({
@@ -25,9 +27,22 @@ const form = useForm({
     city: props.filters.city ?? '',
 });
 
+const syncForm = useForm({});
+
 const submit = () => {
     form.get('/reports', { preserveState: true });
 };
+
+const syncStats = () => {
+    syncForm.post('/reports/sync', { preserveScroll: true });
+};
+
+const pendingTotal = computed(() => {
+    const pending = props.trackerSync?.pending ?? {};
+    return (pending.clicks ?? 0) + (pending.impressions ?? 0) + (pending.conversions ?? 0);
+});
+
+const flushInterval = computed(() => props.trackerSync?.flush_interval_seconds ?? 2);
 
 const exportUrl = (format) => {
     const params = new URLSearchParams({ ...form.data(), format });
@@ -43,6 +58,38 @@ const fmtNum = (n) => new Intl.NumberFormat('es-ES').format(n ?? 0);
 <template>
     <AppLayout title="Reports">
         <div class="space-y-6">
+            <div class="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+                <div class="flex flex-wrap items-start justify-between gap-4">
+                    <div class="max-w-2xl space-y-2">
+                        <h2 class="text-sm font-semibold text-gray-900">Sincronización con el tracker</h2>
+                        <p class="text-sm text-gray-600">
+                            Los reports leen la tabla <code class="text-xs">stats_hourly</code> en MySQL.
+                            El servidor Go recibe clicks, impresiones y conversiones, los acumula en Redis
+                            y los escribe en MySQL automáticamente cada {{ flushInterval }} segundos.
+                            No es en tiempo real: suele haber un retraso de unos segundos.
+                        </p>
+                        <p v-if="trackerSync.reachable" class="text-sm text-gray-600">
+                            Eventos pendientes en el buffer:
+                            <span class="font-medium text-gray-900">{{ fmtNum(pendingTotal) }}</span>
+                            ({{ fmtNum(trackerSync.pending?.clicks ?? 0) }} clicks,
+                            {{ fmtNum(trackerSync.pending?.impressions ?? 0) }} impresiones,
+                            {{ fmtNum(trackerSync.pending?.conversions ?? 0) }} conversiones)
+                        </p>
+                        <p v-else class="text-sm text-amber-700">
+                            No se pudo consultar el estado del tracker{{ trackerSync.error ? `: ${trackerSync.error}` : '' }}.
+                        </p>
+                    </div>
+                    <button
+                        type="button"
+                        :disabled="syncForm.processing"
+                        class="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-gray-300 hover:bg-gray-50 disabled:opacity-50"
+                        @click="syncStats"
+                    >
+                        {{ syncForm.processing ? 'Sincronizando…' : 'Sincronizar stats ahora' }}
+                    </button>
+                </div>
+            </div>
+
             <form class="rounded-lg border border-gray-200 bg-white p-5 shadow-sm" @submit.prevent="submit">
                 <h2 class="mb-4 text-sm font-semibold text-gray-900">Filtros</h2>
                 <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

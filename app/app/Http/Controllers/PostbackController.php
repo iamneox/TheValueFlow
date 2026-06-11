@@ -24,7 +24,7 @@ class PostbackController extends Controller
         $data = $request->validate([
             'partner_id' => 'required|exists:partners,id',
             'offer_id' => 'nullable|exists:offers,id',
-            'url' => 'required|url',
+            'url' => ['required', 'string', 'max:2048', 'regex:/^https?:\/\/[^\s]+$/i'],
             'type' => 'required|in:global,offer',
             'is_active' => 'boolean',
         ]);
@@ -37,7 +37,7 @@ class PostbackController extends Controller
     public function update(Request $request, Postback $postback)
     {
         $data = $request->validate([
-            'url' => 'required|url',
+            'url' => ['required', 'string', 'max:2048', 'regex:/^https?:\/\/[^\s]+$/i'],
             'is_active' => 'boolean',
         ]);
 

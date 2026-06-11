@@ -60,7 +60,8 @@ func main() {
 		ClickCacheTTL: cfg.ClickCacheTTL,
 	}, store, buf, geoLookup)
 
-	internal := handlers.NewInternal(store)
+	wrk := worker.New(buf, mysql, cfg.WorkerBatchSize, cfg.WorkerFlushInterval)
+	internal := handlers.NewInternal(store, buf, wrk, cfg.WorkerFlushInterval)
 
 	mainSrv := &http.Server{
 		Addr:         cfg.ListenAddr,
@@ -94,7 +95,7 @@ func main() {
 		}
 	}()
 
-	go worker.New(buf, mysql, cfg.WorkerBatchSize, cfg.WorkerFlushInterval).Run(ctx)
+	go wrk.Run(ctx)
 
 	<-ctx.Done()
 	slog.Info("shutting down")

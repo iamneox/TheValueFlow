@@ -125,3 +125,23 @@ func (b *Buffer) Ack(ctx context.Context, stream string, ids ...string) error {
 	}
 	return b.rdb.XAck(ctx, stream, models.ConsumerGroup, ids...).Err()
 }
+
+// PendingCounts returns unacknowledged events per stream for the tracker consumer group.
+func (b *Buffer) PendingCounts(ctx context.Context) (map[string]int64, error) {
+	streams := map[string]string{
+		"clicks":       models.StreamClicks,
+		"impressions":  models.StreamImpressions,
+		"conversions":  models.StreamConversions,
+	}
+
+	out := make(map[string]int64, len(streams))
+	for name, stream := range streams {
+		pending, err := b.rdb.XPending(ctx, stream, models.ConsumerGroup).Result()
+		if err != nil {
+			return nil, fmt.Errorf("xpending %s: %w", stream, err)
+		}
+		out[name] = pending.Count
+	}
+
+	return out, nil
+}

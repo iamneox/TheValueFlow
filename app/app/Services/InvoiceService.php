@@ -32,6 +32,7 @@ class InvoiceService
         $total = 0;
 
         foreach ($offers as $offer) {
+            $offer->loadMissing('paymentTypes');
             $stats = $this->reportService->aggregate([
                 'offer_id' => $offer->id,
                 'partner_id' => $partner->id,
@@ -39,32 +40,28 @@ class InvoiceService
                 'to' => $periodEnd,
             ]);
 
-            $quantityType = match ($offer->type) {
-                'CPL', 'CPA' => 'leads',
-                'CPC' => 'clicks',
-                'CPM' => 'impressions',
-                default => 'leads',
-            };
+            foreach ($offer->paymentTypes as $paymentType) {
+                $quantityType = $this->quantityTypeForPayment($paymentType->type);
+                $quantity = match ($quantityType) {
+                    'leads' => $stats['conversions'],
+                    'clicks' => $stats['gross_clicks'],
+                    'impressions' => $stats['impressions'],
+                };
 
-            $quantity = match ($quantityType) {
-                'leads' => $stats['conversions'],
-                'clicks' => $stats['gross_clicks'],
-                'impressions' => $stats['impressions'],
-            };
+                $payout = (float) $paymentType->payout;
+                $lineTotal = $quantity * $payout;
+                $total += $lineTotal;
 
-            $payout = (float) $offer->payout;
-            $lineTotal = $quantity * $payout;
-            $total += $lineTotal;
-
-            InvoiceLine::create([
-                'invoice_id' => $invoice->id,
-                'offer_id' => $offer->id,
-                'campaign_name' => $offer->name,
-                'quantity' => $quantity,
-                'quantity_type' => $quantityType,
-                'payout' => $payout,
-                'total_payout' => $lineTotal,
-            ]);
+                InvoiceLine::create([
+                    'invoice_id' => $invoice->id,
+                    'offer_id' => $offer->id,
+                    'campaign_name' => $offer->name.' ('.$paymentType->type.')',
+                    'quantity' => $quantity,
+                    'quantity_type' => $quantityType,
+                    'payout' => $payout,
+                    'total_payout' => $lineTotal,
+                ]);
+            }
         }
 
         $invoice->update(['total_amount' => $total]);
@@ -94,6 +91,7 @@ class InvoiceService
                 continue;
             }
 
+            $offer->loadMissing('paymentTypes');
             $stats = $this->reportService->aggregate([
                 'offer_id' => $offer->id,
                 'partner_id' => $partner->id,
@@ -101,32 +99,28 @@ class InvoiceService
                 'to' => $invoice->period_end,
             ]);
 
-            $quantityType = match ($offer->type) {
-                'CPL', 'CPA' => 'leads',
-                'CPC' => 'clicks',
-                'CPM' => 'impressions',
-                default => 'leads',
-            };
+            foreach ($offer->paymentTypes as $paymentType) {
+                $quantityType = $this->quantityTypeForPayment($paymentType->type);
+                $quantity = match ($quantityType) {
+                    'leads' => $stats['conversions'],
+                    'clicks' => $stats['gross_clicks'],
+                    'impressions' => $stats['impressions'],
+                };
 
-            $quantity = match ($quantityType) {
-                'leads' => $stats['conversions'],
-                'clicks' => $stats['gross_clicks'],
-                'impressions' => $stats['impressions'],
-            };
+                $payout = (float) $paymentType->payout;
+                $lineTotal = $quantity * $payout;
+                $total += $lineTotal;
 
-            $payout = (float) $offer->payout;
-            $lineTotal = $quantity * $payout;
-            $total += $lineTotal;
-
-            InvoiceLine::create([
-                'invoice_id' => $invoice->id,
-                'offer_id' => $offer->id,
-                'campaign_name' => $offer->name,
-                'quantity' => $quantity,
-                'quantity_type' => $quantityType,
-                'payout' => $payout,
-                'total_payout' => $lineTotal,
-            ]);
+                InvoiceLine::create([
+                    'invoice_id' => $invoice->id,
+                    'offer_id' => $offer->id,
+                    'campaign_name' => $offer->name.' ('.$paymentType->type.')',
+                    'quantity' => $quantity,
+                    'quantity_type' => $quantityType,
+                    'payout' => $payout,
+                    'total_payout' => $lineTotal,
+                ]);
+            }
         }
 
         $invoice->update(['total_amount' => $total]);
@@ -139,6 +133,16 @@ class InvoiceService
         return Pdf::loadView('pdf.invoice', [
             'invoice' => $invoice->load(['partner', 'lines']),
         ]);
+    }
+
+    protected function quantityTypeForPayment(string $type): string
+    {
+        return match ($type) {
+            'CPL', 'CPA' => 'leads',
+            'CPC' => 'clicks',
+            'CPM' => 'impressions',
+            default => 'leads',
+        };
     }
 
     protected function nextNumber(Partner $partner): string

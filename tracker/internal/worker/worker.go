@@ -51,8 +51,28 @@ func (w *Worker) collect(ctx context.Context, pending *batch) {
 	w.readConversions(ctx, pending)
 }
 
+func (w *Worker) FlushNow(ctx context.Context) (int, error) {
+	pending := newBatch()
+	w.drainAll(ctx, pending)
+
+	count := len(pending.clicks) + len(pending.impressions) + len(pending.conversions)
+	w.flush(ctx, pending)
+
+	return count, nil
+}
+
+func (w *Worker) drainAll(ctx context.Context, pending *batch) {
+	w.readClicks(ctx, pending, 0)
+	w.readImpressions(ctx, pending, 0)
+	w.readConversions(ctx, pending, 0)
+}
+
 func (w *Worker) readClicks(ctx context.Context, pending *batch) {
-	w.readStream(ctx, models.StreamClicks, func(raw []byte) error {
+	w.readClicks(ctx, pending, 100*time.Millisecond)
+}
+
+func (w *Worker) readClicks(ctx context.Context, pending *batch, block time.Duration) {
+	w.readStream(ctx, models.StreamClicks, block, func(raw []byte) error {
 		var ev models.ClickEvent
 		if err := json.Unmarshal(raw, &ev); err != nil {
 			return err
@@ -63,7 +83,11 @@ func (w *Worker) readClicks(ctx context.Context, pending *batch) {
 }
 
 func (w *Worker) readImpressions(ctx context.Context, pending *batch) {
-	w.readStream(ctx, models.StreamImpressions, func(raw []byte) error {
+	w.readImpressions(ctx, pending, 100*time.Millisecond)
+}
+
+func (w *Worker) readImpressions(ctx context.Context, pending *batch, block time.Duration) {
+	w.readStream(ctx, models.StreamImpressions, block, func(raw []byte) error {
 		var ev models.ImpressionEvent
 		if err := json.Unmarshal(raw, &ev); err != nil {
 			return err
@@ -74,7 +98,11 @@ func (w *Worker) readImpressions(ctx context.Context, pending *batch) {
 }
 
 func (w *Worker) readConversions(ctx context.Context, pending *batch) {
-	w.readStream(ctx, models.StreamConversions, func(raw []byte) error {
+	w.readConversions(ctx, pending, 100*time.Millisecond)
+}
+
+func (w *Worker) readConversions(ctx context.Context, pending *batch, block time.Duration) {
+	w.readStream(ctx, models.StreamConversions, block, func(raw []byte) error {
 		var ev models.ConversionEvent
 		if err := json.Unmarshal(raw, &ev); err != nil {
 			return err
@@ -84,9 +112,9 @@ func (w *Worker) readConversions(ctx context.Context, pending *batch) {
 	})
 }
 
-func (w *Worker) readStream(ctx context.Context, stream string, handle func([]byte) error) {
+func (w *Worker) readStream(ctx context.Context, stream string, block time.Duration, handle func([]byte) error) {
 	for {
-		msgs, err := w.buf.ReadGroup(ctx, stream, int64(w.batch), 100*time.Millisecond)
+		msgs, err := w.buf.ReadGroup(ctx, stream, int64(w.batch), block)
 		if err != nil {
 			slog.Error("read stream", "stream", stream, "error", err)
 			return

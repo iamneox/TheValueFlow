@@ -4,6 +4,7 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -15,13 +16,38 @@ const (
 	ConsumerName       = "worker-1"
 )
 
+type PaymentTypeConfig struct {
+	Type    string  `json:"type"`
+	Payout  float64 `json:"payout"`
+	Revenue float64 `json:"revenue"`
+}
+
 type OfferConfig struct {
-	ID         int64   `json:"id"`
-	Slug       string  `json:"slug"`
-	Status     string  `json:"status"`
-	LandingURL string  `json:"landing_url"`
-	Payout     float64 `json:"payout"`
-	Revenue    float64 `json:"revenue"`
+	ID            int64               `json:"id"`
+	Slug          string              `json:"slug"`
+	Status        string              `json:"status"`
+	LandingURL    string              `json:"landing_url"`
+	Payout        float64             `json:"payout"`
+	Revenue       float64             `json:"revenue"`
+	PaymentTypes  []PaymentTypeConfig `json:"payment_types"`
+}
+
+func (o OfferConfig) RatesForType(t string) (payout, revenue float64) {
+	for _, pt := range o.PaymentTypes {
+		if strings.EqualFold(pt.Type, t) {
+			return pt.Payout, pt.Revenue
+		}
+	}
+	return o.Payout, o.Revenue
+}
+
+func (o OfferConfig) ConversionRates() (payout, revenue float64) {
+	for _, t := range []string{"CPA", "CPL"} {
+		if payout, revenue := o.RatesForType(t); payout > 0 || revenue > 0 {
+			return payout, revenue
+		}
+	}
+	return o.Payout, o.Revenue
 }
 
 type PartnerConfig struct {

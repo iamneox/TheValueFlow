@@ -64,6 +64,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/creatives/{creative}/kit', [CreativeController::class, 'downloadKit'])->name('creatives.kit');
 
         Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+        Route::post('/reports/sync', [ReportController::class, 'sync'])->name('reports.sync');
         Route::get('/reports/export', [ReportController::class, 'export'])->name('reports.export');
 
         Route::get('/adjustments', [AdjustmentController::class, 'index'])->name('adjustments.index');

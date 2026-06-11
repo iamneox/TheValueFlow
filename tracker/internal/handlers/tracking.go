@@ -233,9 +233,10 @@ func (h *Tracking) handlePostback(w http.ResponseWriter, r *http.Request) {
 	offer, offerOK := h.store.GetOfferByID(meta.OfferID)
 	revenue := float64(0)
 	if offerOK {
-		revenue = offer.Revenue
+		defaultPayout, defaultRevenue := offer.ConversionRates()
+		revenue = defaultRevenue
 		if payout == 0 {
-			payout = offer.Payout
+			payout = defaultPayout
 		}
 	}
 

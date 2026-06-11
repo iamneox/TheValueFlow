@@ -11,7 +11,7 @@ const form = useForm({
     contact_name: '',
     email: '',
     phone: '',
-    payment_terms: '',
+    payment_terms: 'net_30',
     status: 'active',
     notes: '',
 });
@@ -60,9 +60,13 @@ const statusClass = (status) => ({
                             <option value="pending">Pendiente</option>
                         </select>
                     </div>
-                    <div class="sm:col-span-2">
+                    <div>
                         <label class="block text-xs font-medium text-gray-700">Condiciones de pago</label>
-                        <input v-model="form.payment_terms" class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
+                        <select v-model="form.payment_terms" class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            <option value="net_10">Net 10</option>
+                            <option value="net_20">Net 20</option>
+                            <option value="net_30">Net 30</option>
+                        </select>
                     </div>
                 </div>
                 <button type="submit" :disabled="form.processing" class="mt-4 rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 disabled:opacity-50">

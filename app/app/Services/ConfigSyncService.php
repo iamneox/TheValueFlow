@@ -18,8 +18,16 @@ class ConfigSyncService
 
     public function syncOffer(Offer $offer): void
     {
+        $offer->loadMissing('paymentTypes');
+
         $landing = $offer->landingPages()->where('is_default', true)->first()
             ?? $offer->landingPages()->where('is_active', true)->first();
+
+        $paymentTypes = $offer->paymentTypes->map(fn ($pt) => [
+            'type' => $pt->type,
+            'payout' => (float) $pt->payout,
+            'revenue' => (float) $pt->revenue,
+        ])->values()->all();
 
         $payload = json_encode([
             'id' => $offer->id,
@@ -28,6 +36,7 @@ class ConfigSyncService
             'type' => $offer->type,
             'payout' => (float) $offer->payout,
             'revenue' => (float) $offer->revenue,
+            'payment_types' => $paymentTypes,
             'allowed_countries' => $offer->allowed_countries,
             'allowed_days' => $offer->allowed_days,
             'allowed_hours_start' => $offer->allowed_hours_start,

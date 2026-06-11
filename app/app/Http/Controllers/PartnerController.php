@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Partner;
+use App\Support\Countries;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class PartnerController extends Controller
@@ -12,6 +14,7 @@ class PartnerController extends Controller
     {
         return Inertia::render('Partners/Index', [
             'partners' => Partner::orderBy('name')->paginate(20),
+            'countries' => Countries::options(),
         ]);
     }
 
@@ -22,7 +25,7 @@ class PartnerController extends Controller
             'email' => 'nullable|email',
             'phone' => 'nullable|string|max:50',
             'address' => 'nullable|string',
-            'country' => 'nullable|string|max:100',
+            'country' => ['nullable', Rule::in(Countries::codes())],
             'status' => 'required|in:active,paused,pending',
             'payment_terms' => 'required|in:net_10,net_20,net_30',
             'notes' => 'nullable|string',
@@ -40,7 +43,7 @@ class PartnerController extends Controller
             'email' => 'nullable|email',
             'phone' => 'nullable|string|max:50',
             'address' => 'nullable|string',
-            'country' => 'nullable|string|max:100',
+            'country' => ['nullable', Rule::in(Countries::codes())],
             'status' => 'required|in:active,paused,pending',
             'payment_terms' => 'required|in:net_10,net_20,net_30',
             'notes' => 'nullable|string',

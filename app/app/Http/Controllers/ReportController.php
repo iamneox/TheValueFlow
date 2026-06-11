@@ -7,6 +7,7 @@ use App\Models\Client;
 use App\Models\Offer;
 use App\Models\Partner;
 use App\Services\ReportService;
+use App\Services\TrackerStatsService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -14,7 +15,7 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class ReportController extends Controller
 {
-    public function index(Request $request, ReportService $reports)
+    public function index(Request $request, ReportService $reports, TrackerStatsService $trackerStats)
     {
         $filters = $request->only(['from', 'to', 'offer_id', 'partner_id', 'client_id', 'country', 'device', 'os', 'browser', 'city']);
 
@@ -26,7 +27,23 @@ class ReportController extends Controller
             'offers' => Offer::orderBy('name')->get(['id', 'name']),
             'partners' => Partner::orderBy('name')->get(['id', 'name']),
             'clients' => Client::orderBy('company')->get(['id', 'company']),
+            'trackerSync' => $trackerStats->bufferStatus(),
         ]);
+    }
+
+    public function sync(TrackerStatsService $trackerStats)
+    {
+        $result = $trackerStats->flush();
+
+        if ($result['ok'] ?? false) {
+            $processed = $result['processed'] ?? 0;
+
+            return redirect()->route('reports.index')
+                ->with('success', "Stats sincronizadas: {$processed} eventos procesados.");
+        }
+
+        return redirect()->route('reports.index')
+            ->with('error', $result['error'] ?? 'Error al sincronizar con el tracker.');
     }
 
     public function export(Request $request, ReportService $reports)

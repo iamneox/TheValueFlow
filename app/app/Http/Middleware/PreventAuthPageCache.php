@@ -12,7 +12,7 @@ class PreventAuthPageCache
     {
         $response = $next($request);
 
-        if ($request->is('login', 'signup/*')) {
+        if ($request->user() || $request->is('login', 'signup/*')) {
             $response->headers->set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
             $response->headers->set('Pragma', 'no-cache');
         }

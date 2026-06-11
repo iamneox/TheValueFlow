@@ -56,4 +56,14 @@ class Offer extends Model
     {
         return $this->hasMany(OfferPartnerAccess::class);
     }
+
+    public function paymentTypes(): HasMany
+    {
+        return $this->hasMany(OfferPaymentType::class)->orderBy('type');
+    }
+
+    public function paymentTypeFor(string $type): ?OfferPaymentType
+    {
+        return $this->paymentTypes->first(fn ($pt) => strcasecmp($pt->type, $type) === 0);
+    }
 }

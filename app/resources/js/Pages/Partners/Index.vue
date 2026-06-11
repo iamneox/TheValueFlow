@@ -2,9 +2,18 @@
 import { useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 
-defineProps({
+const props = defineProps({
     partners: { type: Object, required: true },
+    countries: { type: Array, default: () => [] },
 });
+
+const countryName = (code) => {
+    if (!code) {
+        return null;
+    }
+    const match = props.countries.find((c) => c.code === code);
+    return match?.name ?? code;
+};
 
 const form = useForm({
     name: '',
@@ -47,7 +56,10 @@ const statusClass = (status) => ({
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-700">País</label>
-                        <input v-model="form.country" class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
+                        <select v-model="form.country" class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            <option value="">Seleccionar…</option>
+                            <option v-for="c in countries" :key="c.code" :value="c.code">{{ c.name }}</option>
+                        </select>
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-700">Pago *</label>
@@ -86,7 +98,7 @@ const statusClass = (status) => ({
                         <tr v-for="partner in partners.data" :key="partner.id">
                             <td class="px-4 py-3 font-medium text-gray-900">{{ partner.name }}</td>
                             <td class="px-4 py-3 text-gray-700">{{ partner.email || '—' }}</td>
-                            <td class="px-4 py-3 text-gray-700">{{ partner.country || '—' }}</td>
+                            <td class="px-4 py-3 text-gray-700">{{ countryName(partner.country) || '—' }}</td>
                             <td class="px-4 py-3 text-gray-700">{{ partner.payment_terms }}</td>
                             <td class="px-4 py-3">
                                 <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium" :class="statusClass(partner.status)">
